@@ -38,7 +38,7 @@ main = blankCanvas 3000 $ \ context -> do	-- start blank canvas on port 3000
 		return ()							-- do something
 ````
 
-### Play Some Sounds
+### Play Sounds
 
 Now to make some sounds! Creating a `CanvasAudio` simply requires calling `newAudio` with 
 the source of the audio file (either a file path or a URL). 
@@ -61,7 +61,7 @@ To pause this audio, simply add `pauseAudio` at some point after `playAudio`.
 While the full range of functionality for `CanvasAudio` is available on `blank-canvas`'s [hackage page](http://hackage.haskell.org/package/blank-canvas-0.6/docs/Graphics-Blank.html), let's look at some more examples of
 different available functions and how to use them.
 
-### playAudio and pauseAudio
+### (REMOVE) playAudio and pauseAudio
 This most basic functions are the self-descriptive `playAudio` and `pauseAudio`.
 
 ````Haskell
@@ -81,5 +81,107 @@ playAudio music
 ````
 
 ## Making a Play Bar
+For a more involved example, we'll look at the audio portions of a simple playbar that has an updating play/pause indicator and a bar that fills as the audio file is played. The complete code for this example is available [here](https://github.com/ku-fpg/blank-canvas/blob/master/examples/playbar/Main.hs).
 
-## Sound a Bounce
+### Main
+First is the `main` which calls `startLoop` with the path to the audio file and is event-triggered by the mouse down.
+
+````Haskell
+main = do
+  dat <- getDataDir
+  blankCanvas 3000 { events = ["mousedown"]} $ \context ->
+    startLoop context "music/sonata.ogg"
+````
+
+### StartLoop
+`startLoop` divides the program into three threads: one that continuously updates the current time of the audio file (stored in the `curTime` TVar), one that continuously reads mouse input to update the `play` TVar, and the main thread which draws the playbar. 
+
+````Haskell
+startLoop :: DeviceContext -> Text.Text -> IO ()
+startLoop context filename = do
+  music   <- send context $ newAudio filename	-- make new CanvasAudio
+  play    <- newTVarIO (Paused)					-- The audio is paused when the page loads
+  curTime <- newTVarIO 0						-- The audio starts at the beginning
+
+  forkIO $ getCurTime context music curTime
+  forkIO $ loopInput context music play
+  loopBar context music play curTime
+
+````
+
+### GetCurTime
+`getCurTime` continuously updates the TVar `curTime` with the current time from the audio file. Note that
+because `currentTimeAudio :: CanvasAudio -> Canvas Double` you first need to send the currentTimeAudio query to the context to get the value `curTime'`
+
+````Haskell
+getCurTime :: DeviceContext -> CanvasAudio -> TVar Double -> IO ()
+getCurTime context audio curTime = do
+  curTime' <- send context $ currentTimeAudio audio
+  atomically $ writeTVar curTime curTime'
+  getCurTime context audio curTime
+````
+
+### LoopInput
+
+Similarly, `loopInput` continuously updates the TVar `play`. The type `Play` is defined as:
+
+````Haskell
+data Play = Playing | Paused
+          deriving (Eq,Ord,Show)
+````
+
+and the function `swap` is defined as:
+
+````Haskell
+-- switch Play to opposite value
+swap :: TVar Play -> STM ()
+swap play = do
+  play' <- readTVar play
+  if (play' == Playing)
+    then writeTVar play (Paused)
+    else writeTVar play (Playing)
+````
+
+`loopInput` will only update `play` when there is a mousedown even and it is within the bounds of
+the play/pause symbol.
+
+````Haskell
+loopInput :: DeviceContext -> CanvasAudio -> TVar Play -> IO ()
+loopInput context audio play = do
+  play' <- readTVarIO play
+  event <- wait context -- waits for event to occur
+  case ePageXY event of
+    -- if no mouse location, ignore, and loop again
+    Nothing -> loopInput context audio play
+    -- rework to get proper clicking range
+    Just (w,h) -> do
+      -- checks to see if the mouse is being clicked on top of the play/pause button
+      if (w >= 5 && w <= 28 && h >= 10 && h <= 41) then
+        send context $ do
+        if (play' == Playing)
+          then do
+          pauseAudio audio
+          else do
+          playAudio audio
+        else loopInput context audio play
+
+      -- update play
+      atomically $ swap play
+    
+  loopInput context audio play
+````
+
+### LoopBar
+
+`loopBar` handles the drawing of the play bar. The with the current delay the animation runs at 25 frames per second.
+
+````Haskell
+loopBar :: DeviceContext -> CanvasAudio -> TVar Play -> TVar Double -> IO ()
+loopBar context audio play curTime = do
+  play'    <- readTVarIO play
+  curTime' <- readTVarIO curTime
+  playbarDraw context audio play' curTime'
+  threadDelay (40 * 1000)
+  loopBar context audio play curTime -- draws a playbar that fills up as the current time gets larger
+````
+
