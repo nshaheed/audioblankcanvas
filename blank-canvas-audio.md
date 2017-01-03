@@ -1,17 +1,6 @@
 # Using Audio in blank-canvas
 
-<!--
-TODO:
-* add links to blank canvas
-* local file path
-* AND urls
-* need full file path (unless you add it as a data file in cabal) 
-
-Questions:
-* Just write for current version?
--->
-
-Say you want to make a game using blank-canvas. Say you want to have a ball in the game.  Sometimes that ball will hit the ground. You might want to add some sound effect of the ball hitting the ground. Or maybe you just want to make a playbar that plays and pauses music. Well, with the `CanvasAudio` type, you can! 
+[`blank-canvas`](https://hackage.haskell.org/package/blank-canvas) is a binding for Haskell to the HTML5 Canvas API, allowing for Haskell-based control of the canvas-based graphics in the web browser. This post covers controlling audio elements inside of `blank-canvas`, allowing for sound in situations, like games, that require both graphics and sound.
 
 ## Basic Example
 `CanvasAudio` uses the [HTML5 Audio element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio) as its back end.  A `CanvasAudio` is a handle to an audio element that can be controlled (with `playAudio`,
@@ -61,14 +50,6 @@ To pause this audio, simply add `pauseAudio` at some point after `playAudio`.
 While the full range of functionality for `CanvasAudio` is available on `blank-canvas`'s [hackage page](http://hackage.haskell.org/package/blank-canvas-0.6/docs/Graphics-Blank.html), let's look at some more examples of
 different available functions and how to use them.
 
-### (REMOVE) playAudio and pauseAudio
-This most basic functions are the self-descriptive `playAudio` and `pauseAudio`.
-
-````Haskell
-music <- newAudio "some url/filepath"
-playAudio music
-pauseAudio music -- immediately pause the audio
-````
 ### Setting playback speed
 A basic function is `setPlaybackRateAudio`. This is a multiplier - 1 is the original playback rate 
 of the file, 2 is twice as fast, 0.5 is half speed, -1 is reverse playback (if the browser supports
@@ -185,3 +166,6 @@ loopBar context audio play curTime = do
   loopBar context audio play curTime -- draws a playbar that fills up as the current time gets larger
 ````
 
+## Going Further
+Further documentation on `blank-canvas` can be found on the library's [hackage](https://github.com/ku-fpg/blank-canvas/blob/master/examples/bounceAudio/Main.hs) page. For more examples, see the [examples folder](https://github.com/ku-fpg/blank-canvas/tree/master/examples).
+For another involved example involving audio, see the [ball bounce audio](https://github.com/ku-fpg/blank-canvas/blob/master/examples/bounceAudio/Main.hs) example.
