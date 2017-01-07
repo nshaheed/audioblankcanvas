@@ -51,6 +51,7 @@ While the full range of functionality for `CanvasAudio` is available on `blank-c
 different available functions and how to use them.
 
 ### Setting playback speed
+
 A basic function is `setPlaybackRateAudio`. This is a multiplier - 1 is the original playback rate 
 of the file, 2 is twice as fast, 0.5 is half speed, -1 is reverse playback (if the browser supports
 it), etc.
@@ -62,6 +63,8 @@ playAudio music
 ````
 
 ## Making a Play Bar
+![](images/playbar.png)
+
 For a more involved example, we'll look at the audio portions of a simple playbar that has an updating play/pause indicator and a bar that fills as the audio file is played. The complete code for this example is available [here](https://github.com/ku-fpg/blank-canvas/blob/master/examples/playbar/Main.hs).
 
 ### Main
